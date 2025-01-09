@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo do Coração</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f5f5f5;
+      margin: 0;
+      flex-direction: column;
+      text-align: center;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 2em;
+      color: #ff4081;
+    }
+
+    #heart {
+      position: absolute;
+      width: 50px;
+      height: 45px;
+    }
+
+    #heart:before,
+    #heart:after {
+      position: absolute;
+      content: "";
+      left: 25px;
+      top: 0;
+      width: 25px;
+      height: 40px;
+      background: red;
+      border-radius: 50px 50px 0 0;
+      transform: rotate(-45deg);
+      transform-origin: 0 100%;
+    }
+
+    #heart:after {
+      left: 0;
+      transform: rotate(45deg);
+      transform-origin: 100% 100%;
+    }
+
+    .message, .transition {
+      display: none;
+      font-size: 3em;
+      color: #ff4081;
+      margin-top: 20px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .start-button, .transition-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4081;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2em;
+    }
+
+    .start-button:hover, .transition-button:hover {
+      background-color: #e0356f;
+    }
+
+    .image {
+      position: absolute;
+      width: 150px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tente clicar no coração!</h1>
+  <p>Se acertar 5 ganhará presente</p>
+
+  <div class="message" id="message">
+    Não conseguiu né? Esse sou eu tentando viver sem você! 💖
+  </div>
+
+  <div class="transition" id="transition">
+    <button class="transition-button" id="transitionButton">Clique Aqui!</button>
+  </div>
+
+  <audio id="audioPlayer" src="https://raw.githubusercontent.com/Gabriyelw/musga/main/1.mp3" style="display:none;" loop></audio>
+
+  <img src="https://pbs.twimg.com/media/GEuiAIyWcAA04uS.jpg" alt="Imagem Fofo" id="cuteImage" class="image">
+
+  <button class="start-button" id="startButton">Clique para começar</button>
+
+  <script>
+    let attempts = 0;
+    const maxAttempts = 5;
+    const message = document.getElementById("message");
+    const transition = document.getElementById("transition");
+    const transitionButton = document.getElementById("transitionButton");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const startButton = document.getElementById("startButton");
+    const cuteImage = document.getElementById("cuteImage");
+
+    audioPlayer.volume = 0.75;
+
+    function spawnHeart() {
+      if (attempts >= maxAttempts) return;
+
+      const heart = document.createElement("div");
+      heart.id = "heart";
+
+      const x = Math.random() * (window.innerWidth - 50); // Para garantir que o coração não ultrapasse a tela
+      const y = Math.random() * (window.innerHeight - 45); // Para garantir que o coração não ultrapasse a tela
+
+      heart.style.left = `${x}px`;
+      heart.style.top = `${y}px`;
+
+      document.body.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, 1000);
+
+      function checkMouseProximity(event) {
+        const heartRect = heart.getBoundingClientRect();
+        const mouseX = event.clientX;
+        const mouseY = event.clientY;
+
+        const distance = Math.sqrt(
+          (mouseX - (heartRect.left + heartRect.width / 2)) ** 2 +
+          (mouseY - (heartRect.top + heartRect.height / 2)) ** 2
+        );
+
+        if (distance < 100) {
+          heart.remove();
+          incrementAttempts();
+        }
+      }
+
+      document.addEventListener("mousemove", checkMouseProximity);
+
+      heart.addEventListener("click", () => {
+        incrementAttempts();
+        spawnHeart();
+      });
+    }
+
+    function incrementAttempts() {
+      attempts++;
+      if (attempts >= maxAttempts) {
+        showTransition();
+      }
+    }
+
+    function showTransition() {
+      document.body.innerHTML = '';
+      document.body.appendChild(transition);
+      transition.style.display = "block";
+
+      transitionButton.addEventListener("click", () => {
+        showMessage();
+      });
+    }
+
+    function showMessage() {
+      document.body.innerHTML = '';
+      document.body.appendChild(message);
+      message.style.display = "block";
+
+      document.body.appendChild(cuteImage);
+      cuteImage.style.display = "block";
+
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+      }
+    }
+
+    function startGame() {
+      setInterval(() => {
+        spawnHeart();
+      }, 500); // Gera um coração a cada 500ms
+    }
+
+    startButton.addEventListener("click", () => {
+      startButton.style.display = "none";
+      startGame();
+    });
+
+    let xPos = 0;
+    let yPos = 0;
+    let xSpeed = 5;
+    let ySpeed = 5;
+
+    function updateLogoPosition() {
+      const logoWidth = cuteImage.width;
+      const logoHeight = cuteImage.height;
+
+      xPos += xSpeed;
+      yPos += ySpeed;
+
+      if (xPos + logoWidth >= window.innerWidth || xPos <= 0) {
+        xSpeed *= -1;
+      }
+
+      if (yPos + logoHeight >= window.innerHeight || yPos <= 0) {
+        ySpeed *= -1;
+      }
+
+      cuteImage.style.left = `${xPos}px`;
+      cuteImage.style.top = `${yPos}px`;
+
+      requestAnimationFrame(updateLogoPosition);
+    }
+
+    updateLogoPosition();
+  </script>
+
+</body>
+</html>
